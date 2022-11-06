@@ -1,0 +1,30 @@
+@font-face {
+  font-family: "Traditional Gothic";
+  src: url('./assets/traditional-gothic.ttf');
+}
+
+@font-face {
+  font-family: "Chomsky";
+  src: url('./assets/chomsky.otf') format('opentype');
+}
+
+@font-face {
+  font-family: "Special Elite";
+  src: url('./assets/special-elite.ttf') format('truetype');
+}
+:root {
+  --black: rgba(0, 0, 0, 0.9);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 1em;
+  padding: 0;
+  background-image: url('./assets/bg-texture.png');
+  min-height: 100vh;
+  color: var(--black);
+  font-family: "Special Elite", 'Times New Roman', Times, serif;
+}
