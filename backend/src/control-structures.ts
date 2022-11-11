@@ -59,3 +59,31 @@ export class Try<Input> {
     }
   }
 }
+
+export class Optional<T> {
+  private constructor(private value?: T) {}
+
+  public isPresent(): boolean {
+    return !!this.value;
+  }
+
+  public isEmpty(): boolean {
+    return !this.isPresent();
+  }
+
+  public get(): T {
+    if (this.isEmpty()) {
+      throw new Error(`Can not get value from empty Optional.`);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this.value!;
+  }
+
+  static of<T>(value: T) {
+    return new Optional<T>(value);
+  }
+
+  static empty<T>() {
+    return new Optional<T>();
+  }
+}

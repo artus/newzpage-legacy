@@ -1,44 +1,45 @@
-import { htmlToText, SelectorDefinition } from "html-to-text";
-import axios from "axios";
+import { SummaryRepository } from "./summary-repository";
+import { chainable } from "valivalue";
+import { Summary } from "./summary";
+import { CONSTANTS } from "./constants";
+import { HttpService } from "./http-service";
+import { DomService } from "./dom-service";
 
-const cache = new Map<string, string>();
+export class SummaryService {
 
-export const getSummary = async (link: string, limit = 5): Promise<string> => {
-  try {
+  constructor(
+    private readonly summaryRepository: SummaryRepository,
+    private readonly httpService: HttpService,
+    private readonly domService: DomService
+  ) {
+    chainable(true)
+      .objects.validateNotNullOrUndefined(summaryRepository, "Summary repository")
+      .objects.validateNotNullOrUndefined(httpService, "Http Service")
+      .objects.validateNotNullOrUndefined(domService, "DOM Service");
+  }
 
-    if (cache.has(link)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return cache.get(link)!;
+  public async getSummary(url: string, limit = CONSTANTS.DEFAULT_SENTENCE_LIMIT): Promise<string> {
+    const savedSummary = await this.summaryRepository.getSummary(url);
+    if (savedSummary.isPresent()) {
+      return savedSummary.get().getSummary(limit);
     }
 
-    console.log(`Getting summary for '${link}'.`);
-    const data = (await axios.get(link)).data;
-    const textContent = htmlToText(data, {
-      wordwrap: null,
-      selectors: SELECTORS
-    });
-    const sentences = splitSentences(textContent);
-    const summary = summarize(sentences, limit);
-    cache.set(link, summary);
-    return summary;
-  } catch (error) {
-    console.error(`Error while getting summary for '${link}', reason: '${(error as Error).message}'`, error as Error);
-    return "No summary for article.";
+
+    try {
+      const html = await this.httpService.getHtml(url);
+      const textContent = await this.domService.getPageContent(url, html);
+      if (textContent.isEmpty()) {
+        return "No summary for article.";
+      }
+      const sentences = splitSentences(textContent.get());
+      const summary = summarize(sentences, limit);
+      return summary;
+    } catch (error) {
+      console.error(`Error while getting summary for '${url}', reason: '${(error as Error).message}'`, error as Error);
+      return "No summary for article.";
+    }
   }
 }
-
-const selector = (value: string): SelectorDefinition => ({ selector: value });
-
-const SELECTORS = [
-  selector('h1'),
-  selector('h2'),
-  selector('h3'),
-  selector('h4'),
-  selector('h5'),
-  selector('h6'),
-  selector('p')
-];
-
 
 const summarize = (sentences: string[], limit: number): string => {
   const wordRatings = new Map<string, number>();

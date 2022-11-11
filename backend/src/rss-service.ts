@@ -13,7 +13,11 @@ interface ParsedFeed {
   items: Array<ParsedItem>
 }
 
-export const getRss = async (link: string) => {
-  const response = await parse(link);
-  return response as ParsedFeed;
+export class RssService {
+
+  public async getRss(url: string) {
+    const response = await parse(url);
+    return response as ParsedFeed;
+  }
+
 }
